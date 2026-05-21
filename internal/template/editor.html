@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактор документа</title>
+    <style>
+        body { margin: 0; }
+        iframe { width: 100%; height: 100vh; border: none; }
+    </style>
+</head>
+<body>
+    <iframe id="editor" src=""></iframe>
+    <script>
+        const fileId = "{{.FileID}}";
+        const fileName = "{{.FileName}}";
+        const wopiHost = "{{.WopiHost}}"; // например http://localhost:8081
+        const onlyOfficeUrl = "{{.OnlyOfficeURL}}"; // http://onlyoffice:8080
+
+        const config = {
+            document: {
+                fileType: fileName.substring(fileName.lastIndexOf('.') + 1),
+                key: fileId + '_' + Date.now(),
+                title: fileName,
+                url: wopiHost + '/wopi/files/' + fileId + '/contents'
+            },
+            documentType: 'text',
+            editorConfig: {
+                callbackUrl: wopiHost + '/wopi/files/' + fileId + '/contents',
+                lang: 'ru',
+                mode: 'edit'
+            },
+            height: '100%',
+            width: '100%'
+        };
+
+        const editorUrl = onlyOfficeUrl + '/web-apps/apps/api/documents/api.js';
+        document.getElementById('editor').src = onlyOfficeUrl + '/web-apps/apps/documenteditor/main/index.html?config=' + encodeURIComponent(JSON.stringify(config));
+    </script>
+</body>
+</html>
