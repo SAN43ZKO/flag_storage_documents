@@ -15,7 +15,8 @@ type Config struct {
 	DBSSLMode        string
 	UploadDir        string
 	OnlyOfficeAPIURL string // URL OnlyOffice Document Server (например, http://onlyoffice:8080)
-	BaseURL          string // URL нашего сервиса, доступный для OnlyOffice (например, http://localhost:8082)
+	PublicURL        string // URL нашего сервиса, доступный для OnlyOffice (например, http://localhost:8082)
+	InternalURL      string
 }
 
 func Load() (*Config, error) {
@@ -34,7 +35,8 @@ func Load() (*Config, error) {
 		DBSSLMode:        getEnv("DB_SSLMODE", "disable"),
 		UploadDir:        getEnv("UPLOAD_DIR", "./uploads"),
 		OnlyOfficeAPIURL: getEnv("ONLYOFFICE_API_URL", "http://onlyoffice:8080"),
-		BaseURL:          getEnv("BASE_URL", "http://localhost:8082"),
+		PublicURL:        getEnv("PUBLIC_URL", "http://localhost"),
+		InternalURL:      getEnv("INTERNAL_URL", "http://frontend"),
 	}, nil
 }
 
