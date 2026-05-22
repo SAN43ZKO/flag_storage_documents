@@ -84,6 +84,7 @@ func (h *FileHandler) Download(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "file not found")
 		return
 	}
+	w.Header().Set("Content-Type", f.MimeType)
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, f.Filename))
 	http.ServeFile(w, r, f.Path)
 }
