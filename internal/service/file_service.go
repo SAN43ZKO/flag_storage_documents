@@ -13,14 +13,13 @@ import (
 )
 
 type FileService struct {
-	repo        *repository.FileRepo
-	uploadDir   string
-	publicURL   string
-	internalURL string
+	repo      *repository.FileRepo
+	uploadDir string
+	publicURL string
 }
 
-func NewFileService(repo *repository.FileRepo, uploadDir, publicURL, internalURL string) *FileService {
-	return &FileService{repo: repo, uploadDir: uploadDir, publicURL: publicURL, internalURL: internalURL}
+func NewFileService(repo *repository.FileRepo, uploadDir, publicURL string) *FileService {
+	return &FileService{repo: repo, uploadDir: uploadDir, publicURL: publicURL}
 }
 
 func (s *FileService) SaveFile(ctx context.Context, originalName string, reader io.Reader) (model.File, error) {
@@ -74,10 +73,6 @@ func (s *FileService) DeleteFile(ctx context.Context, id int64) error {
 
 func (s *FileService) GetDownloadURL(id int64) string {
 	return fmt.Sprintf("%s/api/files/%d/download", s.publicURL, id)
-}
-
-func (s *FileService) GetCallbackURL(id int64) string {
-	return fmt.Sprintf("%s/api/files/%d/callback", s.internalURL, id)
 }
 
 func (s *FileService) UpdateAfterEdit(ctx context.Context, id int64, newPath string, newSize int64) error {

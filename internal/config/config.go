@@ -26,17 +26,16 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		ServerPort:       port,
-		DBHost:           getEnv("DB_HOST", "localhost"),
-		DBPort:           getEnv("DB_PORT", "5432"),
-		DBUser:           getEnv("DB_USER", "docservice"),
-		DBPassword:       getEnv("DB_PASSWORD", "docservice"),
-		DBName:           getEnv("DB_NAME", "docservice_db"),
-		DBSSLMode:        getEnv("DB_SSLMODE", "disable"),
-		UploadDir:        getEnv("UPLOAD_DIR", "./uploads"),
-		OnlyOfficeAPIURL: getEnv("ONLYOFFICE_API_URL", "http://onlyoffice:8080"),
-		PublicURL:        getEnv("PUBLIC_URL", "http://localhost"),
-		InternalURL:      getEnv("INTERNAL_URL", "http://frontend"),
+		ServerPort:  port,
+		DBHost:      getEnv("DB_HOST", "localhost"),
+		DBPort:      getEnv("DB_PORT", "5432"),
+		DBUser:      getEnv("DB_USER", "docservice"),
+		DBPassword:  getEnv("DB_PASSWORD", "docservice"),
+		DBName:      getEnv("DB_NAME", "docservice_db"),
+		DBSSLMode:   getEnv("DB_SSLMODE", "disable"),
+		UploadDir:   getEnv("UPLOAD_DIR", "./uploads"),
+		PublicURL:   getEnv("PUBLIC_URL", "http://localhost"),
+		InternalURL: getEnv("INTERNAL_URL", "http://frontend"),
 	}, nil
 }
 

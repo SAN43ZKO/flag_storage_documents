@@ -3,25 +3,21 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 
 	"storage_files/internal/converter"
-	"storage_files/internal/office"
 	"storage_files/internal/service"
 )
 
 type FileHandler struct {
-	svc              *service.FileService
-	onlyOfficeAPIURL string
+	svc *service.FileService
 }
 
-func NewFileHandler(svc *service.FileService, onlyOfficeAPIURL string) *FileHandler {
-	return &FileHandler{svc: svc, onlyOfficeAPIURL: onlyOfficeAPIURL}
+func NewFileHandler(svc *service.FileService) *FileHandler {
+	return &FileHandler{svc: svc}
 }
 
 func (h *FileHandler) RegisterRoutes(mux *http.ServeMux) {
@@ -33,10 +29,6 @@ func (h *FileHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/files/{id}/download", h.Download)
 	// Предпросмотр PDF
 	mux.HandleFunc("GET /api/files/{id}/preview", h.Preview)
-	// Конфигурация для OnlyOffice
-	mux.HandleFunc("GET /api/files/{id}/edit", h.GetEditorConfig)
-	// Callback от OnlyOffice после редактирования
-	mux.HandleFunc("POST /api/files/{id}/callback", h.Callback)
 	// Удаление файла
 	mux.HandleFunc("DELETE /api/files/{id}", h.Delete)
 }
@@ -113,108 +105,6 @@ func (h *FileHandler) Preview(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/pdf")
 	http.ServeFile(w, r, pdfPath)
-}
-
-// GetEditorConfig возвращает конфигурацию для OnlyOffice
-func (h *FileHandler) GetEditorConfig(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid id")
-		return
-	}
-	f, err := h.svc.GetFile(r.Context(), id)
-	if err != nil {
-		writeError(w, http.StatusNotFound, "file not found")
-		return
-	}
-
-	downloadURL := h.svc.GetDownloadURL(id)
-	callbackURL := h.svc.GetCallbackURL(id)
-
-	config := office.GenerateConfig(id, f.Filename, downloadURL, callbackURL, "edit")
-	writeJSON(w, http.StatusOK, config)
-}
-
-// Callback принимает сохранённый файл от OnlyOffice
-func replaceHost(originalURL, newBase string) (string, error) {
-	u, err := url.Parse(originalURL)
-	if err != nil {
-		return "", err
-	}
-	base, err := url.Parse(newBase)
-	if err != nil {
-		return "", err
-	}
-	u.Scheme = base.Scheme
-	u.Host = base.Host
-	return u.String(), nil
-}
-
-func (h *FileHandler) Callback(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid id")
-		return
-	}
-
-	var body map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json")
-		return
-	}
-
-	status, _ := body["status"].(float64)
-	if status != 2 {
-		writeJSON(w, http.StatusOK, map[string]interface{}{"error": 0})
-		return
-	}
-
-	fileURL, ok := body["url"].(string)
-	if !ok {
-		writeError(w, http.StatusBadRequest, "no url")
-		return
-	}
-
-	// Заменяем хост в URL на адрес OnlyOffice из конфига
-	fixedURL, err := replaceHost(fileURL, h.onlyOfficeAPIURL)
-	if err != nil {
-		log.Printf("replaceHost: %v", err)
-		writeError(w, http.StatusInternalServerError, "bad url")
-		return
-	}
-
-	resp, err := http.Get(fixedURL)
-	if err != nil {
-		log.Printf("download edited file: %v", err)
-		writeError(w, http.StatusInternalServerError, "download failed")
-		return
-	}
-	defer resp.Body.Close()
-
-	f, err := h.svc.GetFile(r.Context(), id)
-	if err != nil {
-		writeError(w, http.StatusNotFound, "file not found")
-		return
-	}
-
-	dst, err := os.Create(f.Path)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "save failed")
-		return
-	}
-	defer dst.Close()
-
-	size, err := io.Copy(dst, resp.Body)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "copy failed")
-		return
-	}
-
-	if err := h.svc.UpdateAfterEdit(r.Context(), id, f.Path, size); err != nil {
-		log.Printf("update after edit: %v", err)
-	}
-
-	writeJSON(w, http.StatusOK, map[string]interface{}{"error": 0})
 }
 
 // Delete удаляет файл

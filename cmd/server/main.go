@@ -43,8 +43,8 @@ func main() {
 	}
 
 	fileRepo := repository.NewFileRepo(pool)
-	fileSvc := service.NewFileService(fileRepo, cfg.UploadDir, cfg.PublicURL, cfg.InternalURL)
-	fileHandler := handler.NewFileHandler(fileSvc, cfg.OnlyOfficeAPIURL)
+	fileSvc := service.NewFileService(fileRepo, cfg.UploadDir, cfg.PublicURL)
+	fileHandler := handler.NewFileHandler(fileSvc)
 
 	mux := http.NewServeMux()
 	fileHandler.RegisterRoutes(mux)
