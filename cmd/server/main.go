@@ -14,6 +14,7 @@ import (
 	"storage_files/internal/handler"
 	"storage_files/internal/repository"
 	"storage_files/internal/service"
+	"storage_files/internal/wopi"
 )
 
 func main() {
@@ -46,8 +47,11 @@ func main() {
 	fileSvc := service.NewFileService(fileRepo, cfg.UploadDir, cfg.PublicURL)
 	fileHandler := handler.NewFileHandler(fileSvc)
 
+	wopiHandler := wopi.NewHandler(fileSvc, cfg.PublicURL)
+
 	mux := http.NewServeMux()
 	fileHandler.RegisterRoutes(mux)
+	wopiHandler.RegisterRoutes(mux)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.ServerPort,
